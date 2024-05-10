@@ -87,28 +87,17 @@ class CustomerResource extends Resource
                 Tables\Columns\TextColumn::make('phone')
                     ->searchable()
                     ->sortable(),
-            ])
-            ->filters([
-                Tables\Filters\TrashedFilter::make(),
-            ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-            ])
-            ->groupedBulkActions([
-                Tables\Actions\DeleteBulkAction::make()
-                    ->action(function () {
-                        Notification::make()
-                            ->title('Now, now, don\'t be cheeky, leave some records for others to play with!')
-                            ->warning()
-                            ->send();
-                    }),
             ]);
     }
 
     /** @return Builder<Customer> */
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->with('addresses')->withoutGlobalScope(SoftDeletingScope::class);
+        return parent::getEloquentQuery()
+            ->with('addresses')
+            ->withoutGlobalScope(SoftDeletingScope::class)
+            ->join('shop_orders', 'shop_orders.shop_customer_id', '=', 'shop_customers.id')
+            ->where('shop_orders.user_id', auth()->id());
     }
 
     public static function getRelations(): array
@@ -123,13 +112,30 @@ class CustomerResource extends Resource
     {
         return [
             'index' => Pages\ListCustomers::route('/'),
-            'create' => Pages\CreateCustomer::route('/create'),
-            'edit' => Pages\EditCustomer::route('/{record}/edit'),
         ];
     }
 
     public static function getGloballySearchableAttributes(): array
     {
         return ['name', 'email'];
+    }
+
+    public static function canEdit($record): bool
+    {
+        return false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return false;
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        $modelClass = static::$model;
+
+        return (string) $modelClass::query()
+            ->join('shop_orders', 'shop_orders.shop_customer_id', '=', 'shop_customers.id')
+            ->where('shop_orders.user_id', auth()->id())->count();
     }
 }

@@ -31,6 +31,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
      * @var array<string, string>
      */
     protected $casts = [
+        'location' => 'object',
         'email_verified_at' => 'datetime',
     ];
 

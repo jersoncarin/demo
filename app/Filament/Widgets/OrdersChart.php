@@ -3,6 +3,8 @@
 namespace App\Filament\Widgets;
 
 use Filament\Widgets\ChartWidget;
+use Carbon\Carbon;
+use App\Models\Shop\Order;
 
 class OrdersChart extends ChartWidget
 {
@@ -17,11 +19,31 @@ class OrdersChart extends ChartWidget
 
     protected function getData(): array
     {
+        $currentYear = Carbon::now()->year;
+        $currentMonth = Carbon::now()->month;
+
+        $months = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+        $latestMonthOrder = Order::selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, COUNT(*) as order_count')
+            ->where('user_id', auth()->id())
+            ->where('status', 'delivered')
+            ->whereNull('deleted_at')
+            ->whereYear('created_at', $currentYear)
+            ->whereMonth('created_at', $currentMonth)
+            ->groupBy('year', 'month')
+            ->get();
+
+        foreach ($latestMonthOrder as $order) {
+            if (isset($months[$order->month - 1])) {
+                $months[$order->month - 1] = $order->order_count;
+            }
+        }
+
         return [
             'datasets' => [
                 [
                     'label' => 'Orders',
-                    'data' => [2433, 3454, 4566, 3300, 5545, 5765, 6787, 8767, 7565, 8576, 9686, 8996],
+                    'data' => $months,
                     'fill' => 'start',
                 ],
             ],

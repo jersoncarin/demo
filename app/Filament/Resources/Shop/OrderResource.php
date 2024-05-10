@@ -102,16 +102,7 @@ class OrderResource extends Resource
                     ->sortable()
                     ->summarize([
                         Tables\Columns\Summarizers\Sum::make()
-                            ->money(),
-                    ]),
-                Tables\Columns\TextColumn::make('shipping_price')
-                    ->label('Shipping cost')
-                    ->searchable()
-                    ->sortable()
-                    ->toggleable()
-                    ->summarize([
-                        Tables\Columns\Summarizers\Sum::make()
-                            ->money(),
+                            ->money('PHP'),
                     ]),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Order Date')
@@ -197,7 +188,8 @@ class OrderResource extends Resource
     /** @return Builder<Order> */
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->withoutGlobalScope(SoftDeletingScope::class);
+        return parent::getEloquentQuery()->withoutGlobalScope(SoftDeletingScope::class)
+            ->where('user_id', auth()->id());
     }
 
     public static function getGloballySearchableAttributes(): array
@@ -217,7 +209,8 @@ class OrderResource extends Resource
     /** @return Builder<Order> */
     public static function getGlobalSearchEloquentQuery(): Builder
     {
-        return parent::getGlobalSearchEloquentQuery()->with(['customer', 'items']);
+        return parent::getGlobalSearchEloquentQuery()->with(['customer', 'items'])
+            ->where('user_id', auth()->id());
     }
 
     public static function getNavigationBadge(): ?string
@@ -225,7 +218,7 @@ class OrderResource extends Resource
         /** @var class-string<Model> $modelClass */
         $modelClass = static::$model;
 
-        return (string) $modelClass::where('status', 'new')->count();
+        return (string) $modelClass::where('status', 'pending')->where('user_id', auth()->id())->count();
     }
 
     /** @return Forms\Components\Component[] */
@@ -282,8 +275,10 @@ class OrderResource extends Resource
 
             Forms\Components\Select::make('currency')
                 ->searchable()
+                ->default(Currency::where('name', 'like', "%Philippine Peso%")->first()->id)
                 ->getSearchResultsUsing(fn (string $query) => Currency::where('name', 'like', "%{$query}%")->pluck('name', 'id'))
                 ->getOptionLabelUsing(fn ($value): ?string => Currency::firstWhere('id', $value)?->getAttribute('name'))
+                ->disabled()
                 ->required(),
 
             AddressForm::make('address')
@@ -301,7 +296,7 @@ class OrderResource extends Resource
             ->schema([
                 Forms\Components\Select::make('shop_product_id')
                     ->label('Product')
-                    ->options(Product::query()->pluck('name', 'id'))
+                    ->options(Product::query()->where('user_id', auth()->id())->pluck('name', 'id'))
                     ->required()
                     ->reactive()
                     ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('unit_price', Product::find($state)?->price ?? 0))
@@ -340,7 +335,7 @@ class OrderResource extends Resource
 
                         $product = Product::find($itemData['shop_product_id']);
 
-                        if (! $product) {
+                        if (!$product) {
                             return null;
                         }
 

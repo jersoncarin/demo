@@ -53,6 +53,13 @@ class CreateOrder extends CreateRecord
             ->sendToDatabase($user);
     }
 
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        $data['user_id'] = auth()->id();
+
+        return $data;
+    }
+
     /** @return Step[] */
     protected function getSteps(): array
     {

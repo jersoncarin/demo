@@ -172,6 +172,12 @@ class ProductResource extends Resource
             ->columns(3);
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->where('user_id', auth()->id());
+    }
+
+
     public static function table(Table $table): Table
     {
         return $table
@@ -264,7 +270,7 @@ class ProductResource extends Resource
                 Tables\Actions\DeleteBulkAction::make()
                     ->action(function () {
                         Notification::make()
-                            ->title('Now, now, don\'t be cheeky, leave some records for others to play with!')
+                            ->title('This product has been deleted')
                             ->warning()
                             ->send();
                     }),
@@ -319,6 +325,8 @@ class ProductResource extends Resource
         /** @var class-string<Model> $modelClass */
         $modelClass = static::$model;
 
-        return (string) $modelClass::whereColumn('qty', '<', 'security_stock')->count();
+        return (string) $modelClass::whereColumn('qty', '<', 'security_stock')
+            ->where('user_id', auth()->id())
+            ->count();
     }
 }

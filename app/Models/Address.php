@@ -14,6 +14,8 @@ class Address extends Model
 
     protected $table = 'addresses';
 
+
+
     /** @return MorphToMany<Customer> */
     public function customers(): MorphToMany
     {
@@ -24,5 +26,12 @@ class Address extends Model
     public function brands(): MorphToMany
     {
         return $this->morphedByMany(Brand::class, 'addressable');
+    }
+
+    protected static function booted()
+    {
+        static::saving(function ($model) {
+            $model->full_address = $model->street . ',' . $model->zip . ',' . $model->city;
+        });
     }
 }

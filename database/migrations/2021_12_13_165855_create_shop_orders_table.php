@@ -15,10 +15,11 @@ return new class() extends Migration
     {
         Schema::create('shop_orders', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('shop_customer_id')->nullable()->constrained()->nullOnDelete();
             $table->string('number', 32)->unique();
             $table->decimal('total_price', 12, 2)->nullable();
-            $table->enum('status', ['new', 'processing', 'shipped', 'delivered', 'cancelled'])->default('new');
+            $table->enum('status', ['pending', 'return', 'delivered', 'cancelled'])->default('pending');
             $table->string('currency');
             $table->decimal('shipping_price')->nullable();
             $table->string('shipping_method')->nullable();

@@ -3,6 +3,7 @@
 namespace App\Models\Shop;
 
 use App\Enums\OrderStatus;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -24,6 +25,7 @@ class Order extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'user_id',
         'number',
         'total_price',
         'status',
@@ -47,6 +49,11 @@ class Order extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class, 'shop_customer_id');
+    }
+
+    public function shopOwner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     /** @return HasMany<OrderItem> */

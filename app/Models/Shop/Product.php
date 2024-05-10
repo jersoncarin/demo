@@ -3,6 +3,7 @@
 namespace App\Models\Shop;
 
 use App\Models\Comment;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -32,6 +33,8 @@ class Product extends Model implements HasMedia
         'published_at' => 'date',
     ];
 
+    protected $guarded = [];
+
     /** @return BelongsTo<Brand,self> */
     public function brand(): BelongsTo
     {
@@ -48,5 +51,10 @@ class Product extends Model implements HasMedia
     public function comments(): MorphMany
     {
         return $this->morphMany(Comment::class, 'commentable');
+    }
+
+    public function shopOwner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 }
